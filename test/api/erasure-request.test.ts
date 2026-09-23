@@ -89,30 +89,39 @@ void describe('/dataerasure', () => {
     assert.equal(res.status, 200)
   })
 
-  if (utils.isChallengeEnabled(challenges.lfrChallenge)) {
-    void it('POST erasure request with non-existing file path as layout parameter throws error', async () => {
-      const { token } = await login(app, { email: 'bjoern.kimminich@gmail.com', password: 'bW9jLmxpYW1nQGhjaW5pbW1pay5ucmVvamI=' })
+  void it('POST erasure request with non-existing file path as layout parameter is only read when the challenge is enabled', async () => {
+    const { token } = await login(app, { email: 'bjoern.kimminich@gmail.com', password: 'bW9jLmxpYW1nQGhjaW5pbW1pay5ucmVvamI=' })
 
-      const res = await request(app)
-        .post('/dataerasure/')
-        .set({ Cookie: 'token=' + token })
-        .send({ layout: '../this/file/does/not/exist' })
+    const res = await request(app)
+      .post('/dataerasure/')
+      .set({ Cookie: 'token=' + token })
+      .send({ layout: '../this/file/does/not/exist' })
 
+    if (utils.isChallengeEnabled(challenges.lfrChallenge)) {
       assert.equal(res.status, 500)
       assert.ok(res.text.includes('no such file or directory'))
-    })
+    } else {
+      assert.equal(res.status, 200)
+      assert.ok(!res.text.includes('no such file or directory'))
+    }
+  })
 
-    void it('POST erasure request with existing file path as layout parameter returns content truncated', async () => {
-      const { token } = await login(app, { email: 'bjoern.kimminich@gmail.com', password: 'bW9jLmxpYW1nQGhjaW5pbW1pay5ucmVvamI=' })
+  void it('POST erasure request with existing file path as layout parameter is only read when the challenge is enabled', async () => {
+    const { token } = await login(app, { email: 'bjoern.kimminich@gmail.com', password: 'bW9jLmxpYW1nQGhjaW5pbW1pay5ucmVvamI=' })
 
-      const res = await request(app)
-        .post('/dataerasure/')
-        .set({ Cookie: 'token=' + token })
-        .send({ layout: '../package.json' })
+    const res = await request(app)
+      .post('/dataerasure/')
+      .set({ Cookie: 'token=' + token })
+      .send({ layout: '../package.json' })
 
+    if (utils.isChallengeEnabled(challenges.lfrChallenge)) {
       assert.equal(res.status, 200)
       assert.ok(res.text.includes('juice-shop'))
       assert.ok(res.text.includes('......'))
-    })
-  }
+    } else {
+      assert.equal(res.status, 200)
+      assert.ok(!res.text.includes('juice-shop'))
+      assert.ok(!res.text.includes('......'))
+    }
+  })
 })

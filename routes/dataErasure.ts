@@ -120,8 +120,10 @@ router.post('/', (req: Request<Record<string, unknown>, Record<string, unknown>,
           next(new Error('File access not allowed'))
         }
       } else {
+        const renderParams = { ...req.body }
+        delete renderParams.layout
         res.render('dataErasureResult', {
-          ...req.body,
+          ...renderParams,
           ...themeVars
         })
       }
